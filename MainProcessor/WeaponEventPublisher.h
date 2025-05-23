@@ -140,15 +140,9 @@ public:
     // =============================================================================
     // 생성자 및 소멸자
     // =============================================================================    
-    WeaponEventPublisher() 
-        : lastCleanupTime_(std::chrono::steady_clock::now()) {
-        LogInfo("WeaponEventPublisher initialized");
-    }
-    
-    ~WeaponEventPublisher() {
-        LogInfo("WeaponEventPublisher shutting down");
-        LogStatistics();
-    }
+    WeaponEventPublisher();    
+    ~WeaponEventPublisher();
+
     // =============================================================================
     // Observer 관리 메서드들
     // =============================================================================    
@@ -165,7 +159,7 @@ public:
     // 기존 인터페이스 호환성을 위한 오버로드
     void NotifyEngagementPlanUpdated(int launcherId, const IEngagementPlan& plan);
 
-     // =============================================================================
+    // =============================================================================
     // 궤적 계산 완료 이벤트 발행
     // =============================================================================    
     void NotifyTrajectoryCalculated(int launcherId, const Trajectory& trajectory);
