@@ -262,4 +262,5 @@ private:
     void LogInfo(const std::string& message) const;
     void LogWarning(const std::string& message) const;
     void LogError(const std::string& message) const;
+};
     
