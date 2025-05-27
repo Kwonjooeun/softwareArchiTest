@@ -40,7 +40,7 @@ public:
     void SetAxisCenter(const GEO_POINT_2D& axisCenter);
 
     // 경로점 관리
-    bool UpdateWaypoints(uint16_t tubeNumber, const std::vector<ST_3D_GEODETIC_POSITION>& waypoints);
+    bool UpdateWaypoints(uint16_t tubeNumber, const std::vector<ST_WEAPON_WAYPOINT>& waypoints);
     bool UpdateWaypoints(const CMSHCI_AIEP_WPN_GEO_WAYPOINTS& waypointsMsg);
 
     // 교전계획 관리
