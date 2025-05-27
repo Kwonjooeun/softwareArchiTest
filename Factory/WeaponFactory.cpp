@@ -54,7 +54,7 @@ public:
         return true;
     }
     
-    bool UpdateWaypoints(const std::vector<ST_3D_GEODETIC_POSITION>& waypoints) override
+    bool UpdateWaypoints(const std::vector<ST_WEAPON_WAYPOINT>& waypoints) override
     {
         m_waypoints = waypoints;
         return CalculateEngagementPlan();
@@ -114,7 +114,7 @@ public:
         return true;
     }
     
-    bool UpdateWaypoints(const std::vector<ST_3D_GEODETIC_POSITION>& waypoints) override
+    bool UpdateWaypoints(const std::vector<ST_WEAPON_WAYPOINT>& waypoints) override
     {
         m_waypoints = waypoints;
         return CalculateEngagementPlan();
@@ -159,7 +159,7 @@ public:
         return true;
     }
     
-    bool UpdateWaypoints(const std::vector<ST_3D_GEODETIC_POSITION>& waypoints) override
+    bool UpdateWaypoints(const std::vector<ST_WEAPON_WAYPOINT>& waypoints) override
     {
         m_waypoints = waypoints;
         return CalculateEngagementPlan();
