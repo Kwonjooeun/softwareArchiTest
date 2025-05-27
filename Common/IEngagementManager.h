@@ -14,6 +14,7 @@ struct EngagementPlanResult
     bool isValid;
     float totalTime_sec;
     std::vector<ST_3D_GEODETIC_POSITION> trajectory;
+    std::vector < ST_WEAPON_WAYPOINT> waypoints;
     ST_3D_GEODETIC_POSITION currentPosition;
     float timeToTarget_sec;
     uint32_t nextWaypointIndex;
