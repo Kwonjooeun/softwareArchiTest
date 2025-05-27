@@ -106,7 +106,7 @@ bool LaunchTubeManager::AssignWeapon(uint16_t tubeNumber, EN_WPN_KIND weaponKind
         tube->UpdateOwnShipInfo(m_ownShipInfo);
         
         // 할당 명령에서 표적 ID 추출하여 표적 정보 업데이트
-        uint32_t targetId = assignCmd.stWpnAssign().unTargetSystemID();
+        uint32_t targetId = assignCmd.stWpnAssign().unTrackNumber();
         auto targetIt = m_targetInfoMap.find(targetId);
         if (targetIt != m_targetInfoMap.end())
         {
@@ -289,7 +289,7 @@ void LaunchTubeManager::SetAxisCenter(const GEO_POINT_2D& axisCenter)
     }
 }
 
-bool LaunchTubeManager::UpdateWaypoints(uint16_t tubeNumber, const std::vector<ST_3D_GEODETIC_POSITION>& waypoints)
+bool LaunchTubeManager::UpdateWaypoints(uint16_t tubeNumber, const std::vector<ST_WEAPON_WAYPOINT>& waypoints)
 {
     auto tube = GetValidatedTube(tubeNumber);
     if (!tube)
@@ -305,12 +305,12 @@ bool LaunchTubeManager::UpdateWaypoints(const CMSHCI_AIEP_WPN_GEO_WAYPOINTS& way
     uint16_t tubeNumber = waypointsMsg.eTubeNum();
     
     // DDS 메시지에서 경로점 추출
-    std::vector<ST_3D_GEODETIC_POSITION> waypoints;
-    for (size_t i = 0; i < waypointsMsg.stWaypoints().size(); ++i)
+    std::vector<ST_WEAPON_WAYPOINT> waypoints;
+    for (size_t i = 0; i < waypointsMsg.stGeoWaypoints().stGeoPos().size(); ++i)
     {
-        if (waypointsMsg.stWaypoints()[i].bValid())
+        if (waypointsMsg.stGeoWaypoints().stGeoPos()[i].bValid())
         {
-            waypoints.push_back(waypointsMsg.stWaypoints()[i]);
+            waypoints.push_back(waypointsMsg.stGeoWaypoints().stGeoPos()[i]);
         }
     }
 
