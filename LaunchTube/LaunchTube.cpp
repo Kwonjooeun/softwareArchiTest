@@ -1,16 +1,17 @@
-#include "LaunchTubeManager.h"
+#include "LaunchTube.h"
+#include "../Factory/WeaponFactory.h"
 #include <iostream>
 
-LaunchTubeManager::LaunchTubeManager(uint16_t tubeNumber)
+LaunchTube::LaunchTube(uint16_t tubeNumber)
     : m_tubeNumber(tubeNumber)
     , m_tubeState(EN_TUBE_STATE::EMPTY)
     , m_weapon(nullptr)
     , m_engagementMgr(nullptr)
 {
-    std::cout << "LaunchTubeManager " << tubeNumber << " created" << std::endl;
+    std::cout << "LaunchTube " << tubeNumber << " created" << std::endl;
 }
 
-bool LaunchTubeManager::AssignWeapon(WeaponPtr weapon, EngagementManagerPtr engagementMgr)
+bool LaunchTube::AssignWeapon(WeaponPtr weapon, EngagementManagerPtr engagementMgr)
 {
     if (!weapon || !engagementMgr)
     {
@@ -42,7 +43,7 @@ bool LaunchTubeManager::AssignWeapon(WeaponPtr weapon, EngagementManagerPtr enga
     return true;
 }
 
-void LaunchTubeManager::ClearAssignment()
+void LaunchTube::ClearAssignment()
 {
     if (m_weapon)
     {
@@ -63,7 +64,7 @@ void LaunchTubeManager::ClearAssignment()
     std::cout << "Assignment cleared for tube " << m_tubeNumber << std::endl;
 }
 
-bool LaunchTubeManager::SetAssignmentInfo(const TEWA_ASSIGN_CMD& assignCmd)
+bool LaunchTube::SetAssignmentInfo(const TEWA_ASSIGN_CMD& assignCmd)
 {
     if (!IsAssigned())
     {
@@ -80,7 +81,7 @@ bool LaunchTubeManager::SetAssignmentInfo(const TEWA_ASSIGN_CMD& assignCmd)
     return success;
 }
 
-bool LaunchTubeManager::UpdateWaypoints(const std::vector<ST_3D_GEODETIC_POSITION>& waypoints)
+bool LaunchTube::UpdateWaypoints(const std::vector<ST_3D_GEODETIC_POSITION>& waypoints)
 {
     if (!IsAssigned())
     {
@@ -90,7 +91,7 @@ bool LaunchTubeManager::UpdateWaypoints(const std::vector<ST_3D_GEODETIC_POSITIO
     return m_engagementMgr->UpdateWaypoints(waypoints);
 }
 
-void LaunchTubeManager::UpdateOwnShipInfo(const NAVINF_SHIP_NAVIGATION_INFO& ownShip)
+void LaunchTube::UpdateOwnShipInfo(const NAVINF_SHIP_NAVIGATION_INFO& ownShip)
 {
     if (IsAssigned())
     {
@@ -98,7 +99,7 @@ void LaunchTubeManager::UpdateOwnShipInfo(const NAVINF_SHIP_NAVIGATION_INFO& own
     }
 }
 
-void LaunchTubeManager::UpdateTargetInfo(const TRKMGR_SYSTEMTARGET_INFO& target)
+void LaunchTube::UpdateTargetInfo(const TRKMGR_SYSTEMTARGET_INFO& target)
 {
     if (IsAssigned())
     {
@@ -106,7 +107,7 @@ void LaunchTubeManager::UpdateTargetInfo(const TRKMGR_SYSTEMTARGET_INFO& target)
     }
 }
 
-void LaunchTubeManager::SetAxisCenter(const GEO_POINT_2D& axisCenter)
+void LaunchTube::SetAxisCenter(const GEO_POINT_2D& axisCenter)
 {
     if (IsAssigned())
     {
@@ -114,7 +115,7 @@ void LaunchTubeManager::SetAxisCenter(const GEO_POINT_2D& axisCenter)
     }
 }
 
-bool LaunchTubeManager::RequestWeaponStateChange(EN_WPN_CTRL_STATE newState)
+bool LaunchTube::RequestWeaponStateChange(EN_WPN_CTRL_STATE newState)
 {
     if (!IsAssigned())
     {
@@ -125,7 +126,7 @@ bool LaunchTubeManager::RequestWeaponStateChange(EN_WPN_CTRL_STATE newState)
     return m_weapon->RequestStateChange(newState);
 }
 
-EN_WPN_CTRL_STATE LaunchTubeManager::GetWeaponState() const
+EN_WPN_CTRL_STATE LaunchTube::GetWeaponState() const
 {
     if (!IsAssigned())
     {
@@ -135,7 +136,7 @@ EN_WPN_CTRL_STATE LaunchTubeManager::GetWeaponState() const
     return m_weapon->GetCurrentState();
 }
 
-bool LaunchTubeManager::CalculateEngagementPlan()
+bool LaunchTube::CalculateEngagementPlan()
 {
     if (!IsAssigned())
     {
@@ -159,7 +160,7 @@ bool LaunchTubeManager::CalculateEngagementPlan()
     return success;
 }
 
-EngagementPlanResult LaunchTubeManager::GetEngagementResult() const
+EngagementPlanResult LaunchTube::GetEngagementResult() const
 {
     if (!IsAssigned())
     {
@@ -171,7 +172,7 @@ EngagementPlanResult LaunchTubeManager::GetEngagementResult() const
     return m_engagementMgr->GetEngagementResult();
 }
 
-bool LaunchTubeManager::IsEngagementPlanValid() const
+bool LaunchTube::IsEngagementPlanValid() const
 {
     if (!IsAssigned())
     {
@@ -181,7 +182,7 @@ bool LaunchTubeManager::IsEngagementPlanValid() const
     return m_engagementMgr->IsEngagementPlanValid();
 }
 
-void LaunchTubeManager::Update()
+void LaunchTube::Update()
 {
     if (!IsAssigned())
     {
@@ -203,7 +204,7 @@ void LaunchTubeManager::Update()
     }
 }
 
-void LaunchTubeManager::OnStateChanged(uint16_t tubeNumber, EN_WPN_CTRL_STATE oldState, EN_WPN_CTRL_STATE newState)
+void LaunchTube::OnStateChanged(uint16_t tubeNumber, EN_WPN_CTRL_STATE oldState, EN_WPN_CTRL_STATE newState)
 {
     if (tubeNumber != m_tubeNumber)
     {
@@ -221,7 +222,7 @@ void LaunchTubeManager::OnStateChanged(uint16_t tubeNumber, EN_WPN_CTRL_STATE ol
     }
 }
 
-void LaunchTubeManager::OnLaunchStatusChanged(uint16_t tubeNumber, bool launched)
+void LaunchTube::OnLaunchStatusChanged(uint16_t tubeNumber, bool launched)
 {
     if (tubeNumber != m_tubeNumber)
     {
@@ -244,22 +245,46 @@ void LaunchTubeManager::OnLaunchStatusChanged(uint16_t tubeNumber, bool launched
     }
 }
 
-void LaunchTubeManager::SetStateChangeCallback(std::function<void(uint16_t, EN_WPN_CTRL_STATE, EN_WPN_CTRL_STATE)> callback)
+void LaunchTube::SetStateChangeCallback(std::function<void(uint16_t, EN_WPN_CTRL_STATE, EN_WPN_CTRL_STATE)> callback)
 {
     m_stateChangeCallback = callback;
 }
 
-void LaunchTubeManager::SetLaunchStatusCallback(std::function<void(uint16_t, bool)> callback)
+void LaunchTube::SetLaunchStatusCallback(std::function<void(uint16_t, bool)> callback)
 {
     m_launchStatusCallback = callback;
 }
 
-void LaunchTubeManager::SetEngagementPlanCallback(std::function<void(uint16_t, const EngagementPlanResult&)> callback)
+void LaunchTube::SetEngagementPlanCallback(std::function<void(uint16_t, const EngagementPlanResult&)> callback)
 {
     m_engagementPlanCallback = callback;
 }
 
-void LaunchTubeManager::UpdateTubeState()
+LaunchTube::TubeStatus LaunchTube::GetStatus() const
+{
+    TubeStatus status;
+    status.tubeNumber = m_tubeNumber;
+    status.tubeState = m_tubeState;
+
+    if (IsAssigned())
+    {
+        status.weaponKind = m_weapon->GetWeaponKind();
+        status.weaponState = m_weapon->GetCurrentState();
+        status.launched = m_weapon->IsLaunched();
+        status.engagementPlanValid = m_engagementMgr->IsEngagementPlanValid();
+    }
+    else
+    {
+        status.weaponKind = EN_WPN_KIND::WPN_KIND_NA;
+        status.weaponState = EN_WPN_CTRL_STATE::WPN_CTRL_STATE_OFF;
+        status.launched = false;
+        status.engagementPlanValid = false;
+    }
+
+    return status;
+}
+
+void LaunchTube::UpdateTubeState()
 {
     EN_TUBE_STATE newState = EN_TUBE_STATE::EMPTY;
 
