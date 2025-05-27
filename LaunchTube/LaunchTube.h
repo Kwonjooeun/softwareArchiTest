@@ -3,8 +3,8 @@
 #include "../Common/IWeapon.h"
 #include "../Common/IEngagementManager.h"
 #include "../Common/WeaponTypes.h"
+#include "../dds_message/AIEP_AIEP_.hpp"
 #include <memory>
-#include <functional>
 
 // 발사관 상태
 enum class EN_TUBE_STATE
@@ -15,12 +15,12 @@ enum class EN_TUBE_STATE
     LAUNCHED    // 발사됨
 };
 
-// 발사관 클래스
-class LaunchTubeManager : public IStateObserver, public std::enable_shared_from_this<LaunchTubeManager>
+// 개별 발사관 클래스 (기존 LaunchTubeManager 역할)
+class LaunchTube : public IStateObserver, public std::enable_shared_from_this<LaunchTube>
 {
 public:
-    LaunchTubeManager(uint16_t tubeNumber);
-    ~LaunchTubeManager() = default;
+    LaunchTube(uint16_t tubeNumber);
+    ~LaunchTube() = default;
 
     // 기본 정보
     uint16_t GetTubeNumber() const { return m_tubeNumber; }
@@ -63,10 +63,26 @@ public:
     void SetStateChangeCallback(std::function<void(uint16_t, EN_WPN_CTRL_STATE, EN_WPN_CTRL_STATE)> callback);
     void SetLaunchStatusCallback(std::function<void(uint16_t, bool)> callback);
     void SetEngagementPlanCallback(std::function<void(uint16_t, const EngagementPlanResult&)> callback);
-    struct TubeStatus{
-        EN_TUBE_STATE entubestate;
-        EWF_TUBE_NUM tubeNumber;
+
+    // 상태 정보 구조체
+    struct TubeStatus
+    {
+        uint16_t tubeNumber;
+        EN_TUBE_STATE tubeState;
+        EN_WPN_KIND weaponKind;
+        EN_WPN_CTRL_STATE weaponState;
+        bool launched;
+        bool engagementPlanValid;
+        
+        TubeStatus() 
+            : tubeNumber(0), tubeState(EN_TUBE_STATE::EMPTY)
+            , weaponKind(EN_WPN_KIND::WPN_KIND_NA)
+            , weaponState(EN_WPN_CTRL_STATE::WPN_CTRL_STATE_OFF)
+            , launched(false), engagementPlanValid(false) {}
     };
+
+    TubeStatus GetStatus() const;
+
 private:
     void UpdateTubeState();
 
