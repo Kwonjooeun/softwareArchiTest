@@ -37,7 +37,7 @@ public:
 
     // 할당 정보 설정
     bool SetAssignmentInfo(const TEWA_ASSIGN_CMD& assignCmd);
-    bool UpdateWaypoints(const std::vector<ST_3D_GEODETIC_POSITION>& waypoints);
+    bool UpdateWaypoints(const std::vector<ST_WEAPON_WAYPOINT>& waypoints);
 
     // 환경 정보 업데이트
     void UpdateOwnShipInfo(const NAVINF_SHIP_NAVIGATION_INFO& ownShip);
@@ -74,8 +74,8 @@ public:
         EN_WPN_CTRL_STATE weaponState;
         bool launched;
         bool engagementPlanValid;
-        
-        TubeStatus() 
+
+        TubeStatus()
             : tubeNumber(0), tubeState(EN_TUBE_STATE::EMPTY)
             , weaponKind(EN_WPN_KIND::WPN_KIND_NA)
             , weaponState(EN_WPN_CTRL_STATE::WPN_CTRL_STATE_OFF)
