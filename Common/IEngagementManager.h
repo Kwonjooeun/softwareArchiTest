@@ -2,6 +2,7 @@
 
 #include "WeaponTypes.h"
 #include "../dds_message/AIEP_AIEP_.hpp"
+#include "../util/AIEP_Defines.h"
 #include <vector>
 #include <memory>
 
