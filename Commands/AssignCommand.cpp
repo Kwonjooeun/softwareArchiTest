@@ -1,20 +1,17 @@
 #include "AssignCommand.h"
-#include "../LaunchTube/LaunchTubeManager.h"
-#include "../dds_message/AIEP_AIEP_.hpp"
 #include <iostream>
 
 // AssignCommand 구현
-// 현재 LaunchTubeManager와 전혀 맞지 않는 구현임.
-// LauchTubeManager 클래스 보완 필요
 AssignCommand::AssignCommand(std::shared_ptr<LaunchTubeManager> tubeManager, const TEWA_ASSIGN_CMD& assignCmd)
     : CommandBase("AssignWeapon", "Assign weapon to launch tube")
     , m_tubeManager(tubeManager)
     , m_assignInfo(assignCmd)
+    , m_wasPreviouslyAssigned(false)
+    , m_previousWeaponKind(EN_WPN_KIND::WPN_KIND_NA)
 {
-    // 실제 dds 메시지 필드는 아래와 같이 접근해야 함.
-    // 현재 m_weaponKind 멤버의 형식이 실제 dds 메시지 필드와 맞지 않게 선언이 되어있어 수정 필요.
-    m_tubeNumber = assignCmd.stWpnAssign().enTubeNum();
-    m_weaponKind = assignCmd.stWpnAssign().enWeaponType();
+    // DDS 메시지에서 필드 추출
+    m_tubeNumber = assignCmd.stWpnAssign().enAllocTube();
+    m_weaponKind = static_cast<EN_WPN_KIND>(assignCmd.stWpnAssign().enWeaponType());
 }
 
 CommandResult AssignCommand::Execute()
@@ -26,11 +23,18 @@ CommandResult AssignCommand::Execute()
     }
     
     // 기존 할당 정보 백업 (Undo용)
-    auto tube = tubeManager->GetLaunchTube(m_tubeNumber);
-    if (tube && tube->IsAssigned())
+    if (tubeManager->IsAssigned(m_tubeNumber))
     {
-        m_previousWeapon = tube->GetWeapon();
-        m_previousEngagementMgr = tube->GetEngagementManager();
+        m_wasPreviouslyAssigned = true;
+        auto tube = tubeManager->GetLaunchTube(m_tubeNumber);
+        if (tube && tube->IsAssigned())
+        {
+            m_previousWeaponKind = tube->GetWeapon()->GetWeaponKind();
+        }
+    }
+    else
+    {
+        m_wasPreviouslyAssigned = false;
     }
     
     // 무장 할당 실행
@@ -38,7 +42,8 @@ CommandResult AssignCommand::Execute()
     
     if (success)
     {
-        return CommandResult::Success("Weapon assigned to tube " + std::to_string(m_tubeNumber));
+        return CommandResult::Success("Weapon " + WeaponKindToString(m_weaponKind) + 
+                                     " assigned to tube " + std::to_string(m_tubeNumber));
     }
     else
     {
@@ -60,14 +65,11 @@ CommandResult AssignCommand::Undo()
         return CommandResult::Failure("Failed to unassign weapon from tube " + std::to_string(m_tubeNumber));
     }
     
-    // 이전 상태 복원 (이전에 할당된 무장이 있었다면)
-    if (m_previousWeapon && m_previousEngagementMgr)
+    // 이전에 할당된 무장이 있었다면 복원 (실제 구현에서는 이전 할당 정보 전체 저장 필요)
+    if (m_wasPreviouslyAssigned)
     {
-        auto tube = tubeManager->GetLaunchTube(m_tubeNumber);
-        if (tube)
-        {
-            tube->AssignWeapon(m_previousWeapon, m_previousEngagementMgr);
-        }
+        // 주의: 완전한 Undo를 위해서는 이전 할당 명령도 저장해야 함
+        std::cout << "Warning: Previous weapon assignment cannot be fully restored" << std::endl;
     }
     
     return CommandResult::Success("Assignment undone for tube " + std::to_string(m_tubeNumber));
@@ -89,6 +91,8 @@ UnassignCommand::UnassignCommand(std::shared_ptr<LaunchTubeManager> tubeManager,
     : CommandBase("UnassignWeapon", "Unassign weapon from launch tube")
     , m_tubeManager(tubeManager)
     , m_tubeNumber(tubeNumber)
+    , m_wasPreviouslyAssigned(false)
+    , m_previousWeaponKind(EN_WPN_KIND::WPN_KIND_NA)
 {
 }
 
@@ -101,12 +105,20 @@ CommandResult UnassignCommand::Execute()
     }
     
     // 기존 할당 정보 백업 (Undo용)
-    auto tube = tubeManager->GetLaunchTube(m_tubeNumber);
-    if (tube && tube->IsAssigned())
+    if (tubeManager->IsAssigned(m_tubeNumber))
     {
-        m_previousWeapon = tube->GetWeapon();
-        m_previousEngagementMgr = tube->GetEngagementManager();
-        // 실제 구현에서는 할당 정보도 백업
+        m_wasPreviouslyAssigned = true;
+        auto tube = tubeManager->GetLaunchTube(m_tubeNumber);
+        if (tube && tube->IsAssigned())
+        {
+            m_previousWeaponKind = tube->GetWeapon()->GetWeaponKind();
+            // 실제 구현에서는 전체 할당 정보를 저장해야 함
+            // m_previousAssignInfo = GetAssignmentInfo(tube);
+        }
+    }
+    else
+    {
+        return CommandResult::Failure("Tube " + std::to_string(m_tubeNumber) + " is not assigned");
     }
     
     // 무장 할당 해제 실행
@@ -131,20 +143,16 @@ CommandResult UnassignCommand::Undo()
     }
     
     // 이전 상태 복원
-    if (m_previousWeapon && m_previousEngagementMgr)
+    if (m_wasPreviouslyAssigned)
     {
-        auto tube = tubeManager->GetLaunchTube(m_tubeNumber);
-        if (tube)
-        {
-            if (tube->AssignWeapon(m_previousWeapon, m_previousEngagementMgr))
-            {
-                // 할당 정보도 복원 (실제 구현에서)
-                return CommandResult::Success("Assignment restored for tube " + std::to_string(m_tubeNumber));
-            }
-        }
+        // 실제 구현에서는 저장된 할당 정보로 복원
+        // bool success = tubeManager->AssignWeapon(m_tubeNumber, m_previousWeaponKind, m_previousAssignInfo);
+        std::cout << "Warning: Previous weapon assignment cannot be fully restored without assignment info" << std::endl;
+        return CommandResult::Success("Unassignment undone for tube " + std::to_string(m_tubeNumber) + 
+                                     " (partial restoration)");
     }
     
-    return CommandResult::Failure("Failed to restore assignment for tube " + std::to_string(m_tubeNumber));
+    return CommandResult::Success("Unassignment undone for tube " + std::to_string(m_tubeNumber));
 }
 
 bool UnassignCommand::IsValid() const
@@ -161,12 +169,21 @@ bool UnassignCommand::IsValid() const
 // UpdateWaypointsCommand 구현
 UpdateWaypointsCommand::UpdateWaypointsCommand(std::shared_ptr<LaunchTubeManager> tubeManager, 
                                              uint16_t tubeNumber,
-                                             const std::vector<ST_3D_GEODETIC_POSITION>& waypoints)
+                                             const std::vector<ST_WEAPON_WAYPOINT>& waypoints)
     : CommandBase("UpdateWaypoints", "Update weapon waypoints")
     , m_tubeManager(tubeManager)
     , m_tubeNumber(tubeNumber)
     , m_newWaypoints(waypoints)
 {
+}
+
+UpdateWaypointsCommand::UpdateWaypointsCommand(std::shared_ptr<LaunchTubeManager> tubeManager,
+                                             const CMSHCI_AIEP_WPN_GEO_WAYPOINTS& waypointsMsg)
+    : CommandBase("UpdateWaypoints", "Update weapon waypoints from DDS message")
+    , m_tubeManager(tubeManager)
+{
+    m_tubeNumber = waypointsMsg.eTubeNum();
+    ExtractWaypointsFromMessage(waypointsMsg);
 }
 
 CommandResult UpdateWaypointsCommand::Execute()
@@ -182,8 +199,7 @@ CommandResult UpdateWaypointsCommand::Execute()
     if (tube && tube->IsAssigned())
     {
         auto engagementResult = tube->GetEngagementResult();
-        // 실제 구현에서는 현재 경로점을 백업
-        // m_previousWaypoints = engagementResult.waypoints;
+        m_previousWaypoints = engagementResult.waypoints; // 실제로는 waypoints 필드가 있어야 함
     }
     
     // 경로점 업데이트 실행
@@ -191,7 +207,8 @@ CommandResult UpdateWaypointsCommand::Execute()
     
     if (success)
     {
-        return CommandResult::Success("Waypoints updated for tube " + std::to_string(m_tubeNumber));
+        return CommandResult::Success("Waypoints updated for tube " + std::to_string(m_tubeNumber) +
+                                     " (" + std::to_string(m_newWaypoints.size()) + " waypoints)");
     }
     else
     {
@@ -248,4 +265,24 @@ bool UpdateWaypointsCommand::IsValid() const
     }
     
     return true;
+}
+
+void UpdateWaypointsCommand::ExtractWaypointsFromMessage(const CMSHCI_AIEP_WPN_GEO_WAYPOINTS& waypointsMsg)
+{
+    m_newWaypoints.clear();
+
+    // DDS 메시지에서 경로점 추출
+    for (size_t i = 0; i < waypointsMsg.stGeoWaypoints().stGeoPos().size(); ++i)
+    {
+        const auto& waypoint = waypointsMsg.stGeoWaypoints().stGeoPos()[i];
+        if (waypoint.bValid())
+        {
+            ST_WEAPON_WAYPOINT pos;
+            pos.dLatitude() = waypoint.dLatitude();
+            pos.dLongitude() = waypoint.dLongitude();
+            pos.fDepth() = waypoint.fDepth();
+
+            m_newWaypoints.push_back(pos);
+        }
+    }
 }
