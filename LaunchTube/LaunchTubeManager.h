@@ -9,6 +9,7 @@
 #include <vector>
 #include <functional>
 #include <mutex>
+#include <shared_mutex>
 
 // 발사관 관리자 클래스 - 모든 발사관을 관리
 class LaunchTubeManager
