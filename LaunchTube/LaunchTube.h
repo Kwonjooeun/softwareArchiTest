@@ -3,6 +3,7 @@
 #include "../Common/IWeapon.h"
 #include "../Common/IEngagementManager.h"
 #include "../Common/WeaponTypes.h"
+#include "../util/AIEP_Defines.h"
 #include "../dds_message/AIEP_AIEP_.hpp"
 #include <memory>
 
