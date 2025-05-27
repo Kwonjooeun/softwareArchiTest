@@ -81,7 +81,7 @@ bool LaunchTube::SetAssignmentInfo(const TEWA_ASSIGN_CMD& assignCmd)
     return success;
 }
 
-bool LaunchTube::UpdateWaypoints(const std::vector<ST_3D_GEODETIC_POSITION>& waypoints)
+bool LaunchTube::UpdateWaypoints(const std::vector<ST_WEAPON_WAYPOINT>& waypoints)
 {
     if (!IsAssigned())
     {
@@ -138,7 +138,7 @@ EN_WPN_CTRL_STATE LaunchTube::GetWeaponState() const
 
 bool LaunchTube::CalculateEngagementPlan()
 {
-    if (!IsAssigned())
+        if (!IsAssigned())
     {
         return false;
     }
