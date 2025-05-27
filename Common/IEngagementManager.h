@@ -98,7 +98,7 @@ protected:
     GEO_POINT_2D m_axisCenter;
     EngagementPlanResult m_engagementResult;
     
-    std::vector<ST_3D_GEODETIC_POSITION> m_waypoints;
+    std::vector<ST_WEAPON_WAYPOINT> m_waypoints;
     ST_3D_GEODETIC_POSITION m_launchPosition;
     ST_3D_GEODETIC_POSITION m_targetPosition;
     
