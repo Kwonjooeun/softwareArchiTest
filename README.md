@@ -81,50 +81,11 @@ WeaponControlSystem/
 
 ### 전제 조건
 
-- C++17 지원 컴파일러 (Visual Studio 2022, GCC 8+, Clang 7+)
-- CMake 3.16 이상
+- C++20 지원 컴파일러 (Visual Studio 2022, GCC 8+, Clang 7+)
 - Windows 10 이상 (현재 지원 플랫폼)
 
-### 빌드 단계
-
-1. **저장소 클론**
-   ```bash
-   git clone <repository-url>
-   cd WeaponControlSystem
-   ```
-
-2. **빌드 디렉토리 생성**
-   ```bash
-   mkdir build
-   cd build
-   ```
-
-3. **CMake 설정**
-   ```bash
-   # Release 빌드
-   cmake .. -DCMAKE_BUILD_TYPE=Release
-   
-   # Debug 빌드
-   cmake .. -DCMAKE_BUILD_TYPE=Debug
-   
-   # 테스트 포함
-   cmake .. -DBUILD_TESTS=ON
-   ```
-
-4. **컴파일**
-   ```bash
-   # Windows (Visual Studio)
-   cmake --build . --config Release
-   
-   # Linux/macOS
-   make -j$(nproc)
-   ```
 
 ### Visual Studio에서 빌드
-
-1. CMake Tools 확장 설치
-2. 폴더 열기로 프로젝트 루트 디렉토리 선택
-3. CMake 구성 및 빌드
 
 ## 사용법
 
@@ -257,24 +218,11 @@ auto status = controller->GetTubeStatus(1);
 2. `AiepDdsComm`에 송수신 함수 추가
 3. `WeaponController`에 처리 로직 구현
 
-## 테스트
-
-```bash
-# 테스트 빌드
-cmake .. -DBUILD_TESTS=ON
-cmake --build .
-
-# 테스트 실행
-ctest
-# 또는
-./WeaponControlSystemTests
-```
-
 ## 문제 해결
 
 ### 일반적인 문제
 
-1. **컴파일 오류**: C++17 지원 컴파일러 사용 확인
+1. **컴파일 오류**: C++20 지원 컴파일러 사용 확인
 2. **링크 오류**: 스레드 라이브러리 링크 확인
 3. **런타임 오류**: 작업 디렉토리에 mine_plans 폴더 존재 확인
 
