@@ -194,12 +194,12 @@ CommandResult UpdateWaypointsCommand::Execute()
         return CommandResult::Failure("TubeManager is not available");
     }
     
-    // 기존 경로점 백업 (Undo용)
+    // 기존 경로점 백업 (Undo용) - 수정된 부분: 올바른 방법으로 이전 경로점 가져오기
     auto tube = tubeManager->GetLaunchTube(m_tubeNumber);
     if (tube && tube->IsAssigned())
     {
         auto engagementResult = tube->GetEngagementResult();
-        m_previousWaypoints = engagementResult.waypoints; // 실제로는 waypoints 필드가 있어야 함
+        m_previousWaypoints = engagementResult.waypoints;
     }
     
     // 경로점 업데이트 실행
@@ -271,16 +271,22 @@ void UpdateWaypointsCommand::ExtractWaypointsFromMessage(const CMSHCI_AIEP_WPN_G
 {
     m_newWaypoints.clear();
 
-    // DDS 메시지에서 경로점 추출
-    for (size_t i = 0; i < waypointsMsg.stGeoWaypoints().stGeoPos().size(); ++i)
+    // DDS 메시지에서 경로점 추출 - 수정된 부분: 올바른 필드 접근
+    const auto& geoWaypoints = waypointsMsg.stGeoWaypoints();
+    
+    // 경로점 개수 확인
+    uint32_t waypointCount = geoWaypoints.unCntWaypoints();
+    
+    for (uint32_t i = 0; i < waypointCount && i < geoWaypoints.stGeoPos().size(); ++i)
     {
-        const auto& waypoint = waypointsMsg.stGeoWaypoints().stGeoPos()[i];
+        const auto& waypoint = geoWaypoints.stGeoPos()[i];
         if (waypoint.bValid())
         {
             ST_WEAPON_WAYPOINT pos;
             pos.dLatitude() = waypoint.dLatitude();
             pos.dLongitude() = waypoint.dLongitude();
             pos.fDepth() = waypoint.fDepth();
+            pos.bValid() = waypoint.bValid();
 
             m_newWaypoints.push_back(pos);
         }
