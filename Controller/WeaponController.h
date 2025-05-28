@@ -17,6 +17,9 @@
 #include <chrono>
 #include <mutex>
 
+// 전방 선언 (순환 의존성 해결)
+class AiepDdsComm;
+
 // 메인 무장 통제 컨트롤러
 class WeaponController : public std::enable_shared_from_this<WeaponController>
 {
