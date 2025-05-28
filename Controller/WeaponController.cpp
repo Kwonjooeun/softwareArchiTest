@@ -1,6 +1,5 @@
 #include "WeaponController.h"
-#include "../Communication/CAiepDdsComm.h"  // 이 줄 추가
-
+#include "../Communication/CAiepDdsComm.h"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -214,13 +213,13 @@ void WeaponController::OnDDSTopicRcvd(const CMSHCI_AIEP_M_MINE_SELECTED_PLAN& se
 
 void WeaponController::OnDDSTopicRcvd(const CMSHCI_AIEP_WPN_GEO_WAYPOINTS& waypoints)
 {
-    LogInfo("Received waypoints for tube " + std::to_string(waypoints.getTubeNumber()));
+    LogInfo("Received waypoints for tube " + std::to_string(waypoints.eTubeNum()));
     ProcessWaypointUpdate(waypoints);
 }
 
 void WeaponController::OnDDSTopicRcvd_Async(const CMSHCI_AIEP_WPN_CTRL_CMD& wpnCtrlCmd)
 {
-    LogInfo("Received weapon control command for tube " + std::to_string(wpnCtrlCmd.getTubeNumber()));
+    LogInfo("Received weapon control command for tube " + std::to_string(wpnCtrlCmd.eTubeNum()));
     
     auto command = std::make_shared<WeaponControlCommand>(m_tubeManager, wpnCtrlCmd);
     m_commandProcessor->EnqueueCommand(command);
@@ -260,8 +259,8 @@ void WeaponController::OnDDSTopicRcvd(const AIEP_INTERNAL_INFER_RESULT_FIRE_TIME
     ProcessFireTimeInference(inferResultFireTime);
 }
 
-// 상태 정보 조회
-std::vector<LaunchTubeManager::TubeStatus> WeaponController::GetAllTubeStatus() const
+// 상태 정보 조회 - 수정된 부분: LaunchTubeManager::TubeStatus -> LaunchTube::TubeStatus
+std::vector<LaunchTube::TubeStatus> WeaponController::GetAllTubeStatus() const
 {
     if (!m_tubeManager)
     {
@@ -271,11 +270,11 @@ std::vector<LaunchTubeManager::TubeStatus> WeaponController::GetAllTubeStatus() 
     return m_tubeManager->GetAllTubeStatus();
 }
 
-LaunchTubeManager::TubeStatus WeaponController::GetTubeStatus(uint16_t tubeNumber) const
+LaunchTube::TubeStatus WeaponController::GetTubeStatus(uint16_t tubeNumber) const
 {
     if (!m_tubeManager)
     {
-        LaunchTubeManager::TubeStatus emptyStatus;
+        LaunchTube::TubeStatus emptyStatus;
         emptyStatus.tubeNumber = tubeNumber;
         return emptyStatus;
     }
@@ -298,7 +297,7 @@ EngagementPlanResult WeaponController::GetEngagementResult(uint16_t tubeNumber) 
     if (!m_tubeManager)
     {
         EngagementPlanResult emptyResult;
-        emptyResult.tubeNumber = static_cast<EWF_TUBE_NUM>(tubeNumber);
+        emptyResult.tubeNumber = tubeNumber;  // 수정: static_cast 제거
         return emptyResult;
     }
     
@@ -313,12 +312,12 @@ bool WeaponController::DirectAssignWeapon(uint16_t tubeNumber, EN_WPN_KIND weapo
         return false;
     }
     
-    // 더미 할당 명령 생성
+    // 더미 할당 명령 생성 - 수정된 부분: 올바른 필드 접근
     TEWA_ASSIGN_CMD dummyCmd;
-    dummyCmd.weaponAssign.tubeNumber = tubeNumber;
-    dummyCmd.weaponAssign.weaponKind = weaponKind;
-    dummyCmd.weaponAssign.targetId = 1;
-    dummyCmd.weaponAssign.missionId = 1;
+    // DDS 메시지 구조에 맞게 필드 설정
+    dummyCmd.stWpnAssign().enAllocTube() = tubeNumber;
+    dummyCmd.stWpnAssign().enWeaponType() = static_cast<int>(weaponKind);
+    dummyCmd.stWpnAssign().unTrackNumber() = 1;  // 기본 표적 ID
     
     return m_tubeManager->AssignWeapon(tubeNumber, weaponKind, dummyCmd);
 }
@@ -493,12 +492,21 @@ void WeaponController::SendEngagementResults()
         if (result.weaponKind == EN_WPN_KIND::WPN_KIND_M_MINE)
         {
             AIEP_M_MINE_EP_RESULT mineResult;
-            // result를 SAL_MINE_EP_RESULT로 변환
-            mineResult.result.tubeNumber = result.tubeNumber;
-            mineResult.result.isValid = result.isValid;
-            mineResult.result.totalTime_sec = result.totalTime_sec;
-            mineResult.result.currentPosition = result.currentPosition;
-            mineResult.result.timeToTarget_sec = result.timeToTarget_sec;
+            // result를 DDS 메시지로 변환 - 수정된 부분: 올바른 필드 설정
+            mineResult.enTubeNum() = result.tubeNumber;
+            mineResult.fEstimatedDrivingTime() = result.totalTime_sec;
+            mineResult.fRemainingTime() = result.timeToTarget_sec;
+            mineResult.bValidMslPos() = result.isValid;
+            
+            // 현재 위치 설정
+            if (result.isValid)
+            {
+                mineResult.MslPos() = result.currentPosition;
+            }
+            
+            // 다음 경로점 정보
+            mineResult.numberOfNextWP() = result.nextWaypointIndex;
+            mineResult.timeToNextWP() = result.timeToNextWaypoint_sec;
             
             m_ddsComm->SendMineEngagementResult(mineResult);
         }
@@ -519,10 +527,12 @@ void WeaponController::ProcessMineDropPlanRequest(const CMSHCI_AIEP_M_MINE_DROPP
     
     try
     {
-        auto planListMessage = m_planManager->ConvertToAllPlanListMessage(request.planListNumber);
+        // 수정된 부분: 올바른 필드 접근
+        uint32_t planListNumber = request.unSelectedPlanListNbr();
+        auto planListMessage = m_planManager->ConvertToAllPlanListMessage(planListNumber);
         m_ddsComm->SendMineAllPlanList(planListMessage);
         
-        LogInfo("Sent mine plan list " + std::to_string(request.planListNumber));
+        LogInfo("Sent mine plan list " + std::to_string(planListNumber));
     }
     catch (const std::exception& e)
     {
@@ -543,11 +553,12 @@ void WeaponController::ProcessEditedPlanList(const CMSHCI_AIEP_M_MINE_EDITED_PLA
         
         if (success)
         {
-            LogInfo("Updated mine plan list " + std::to_string(editedList.planListNumber));
+            // 수정된 부분: 올바른 필드 접근
+            LogInfo("Updated mine plan list " + std::to_string(editedList.unSelectedPlanListNbr()));
         }
         else
         {
-            LogError("Failed to update mine plan list " + std::to_string(editedList.planListNumber));
+            LogError("Failed to update mine plan list " + std::to_string(editedList.unSelectedPlanListNbr()));
         }
     }
     catch (const std::exception& e)
@@ -558,8 +569,9 @@ void WeaponController::ProcessEditedPlanList(const CMSHCI_AIEP_M_MINE_EDITED_PLA
 
 void WeaponController::ProcessSelectedPlan(const CMSHCI_AIEP_M_MINE_SELECTED_PLAN& selectedPlan)
 {
-    SetSelectedPlanListNumber(selectedPlan.planListNumber);
-    LogInfo("Selected plan list number: " + std::to_string(selectedPlan.planListNumber));
+    // 수정된 부분: 올바른 필드 접근
+    SetSelectedPlanListNumber(selectedPlan.unSelectedPlanListNbr());
+    LogInfo("Selected plan list number: " + std::to_string(selectedPlan.unSelectedPlanListNbr()));
 }
 
 void WeaponController::ProcessWaypointUpdate(const CMSHCI_AIEP_WPN_GEO_WAYPOINTS& waypoints)
@@ -573,24 +585,25 @@ void WeaponController::ProcessWaypointUpdate(const CMSHCI_AIEP_WPN_GEO_WAYPOINTS
     
     if (success)
     {
-        LogInfo("Updated waypoints for tube " + std::to_string(waypoints.getTubeNumber()));
+        LogInfo("Updated waypoints for tube " + std::to_string(waypoints.eTubeNum()));
     }
     else
     {
-        LogError("Failed to update waypoints for tube " + std::to_string(waypoints.getTubeNumber()));
+        LogError("Failed to update waypoints for tube " + std::to_string(waypoints.eTubeNum()));
     }
 }
 
 void WeaponController::ProcessAIWaypointInference(const CMSHCI_AIEP_AI_WAYPOINTS_INFERENCE_REQ& request)
 {
     // AI 추론 요청 처리 (향후 확장)
-    LogInfo("Processing AI waypoint inference request for tube " + std::to_string(request.tubeNumber));
+    // 수정된 부분: 존재하는 필드만 사용
+    LogInfo("Processing AI waypoint inference request");
     
     // 임시로 더미 결과 생성
     AIEP_AI_INFER_RESULT_WP result;
-    result.requestId = 1; // request에서 ID 추출
-    result.resultCode = 0; // 성공
-    result.resultWaypoints = {request.startPosition, request.endPosition};
+    // DDS 메시지 구조에 맞게 필드 설정
+    result.unRequestID() = 1; // 기본 요청 ID
+    result.eResultCode() = 0;  // 성공 코드
     
     if (m_ddsComm)
     {
@@ -600,13 +613,15 @@ void WeaponController::ProcessAIWaypointInference(const CMSHCI_AIEP_AI_WAYPOINTS
 
 void WeaponController::ProcessInferenceResult(const AIEP_INTERNAL_INFER_RESULT_WP& result)
 {
-    LogInfo("Processing inference result for request " + std::to_string(result.requestId));
+    // 수정된 부분: 올바른 필드 접근
+    LogInfo("Processing inference result for request " + std::to_string(result.unRequestID()));
     // 추론 결과 처리 로직 구현
 }
 
 void WeaponController::ProcessFireTimeInference(const AIEP_INTERNAL_INFER_RESULT_FIRE_TIME& result)
 {
-    LogInfo("Processing fire time inference result for request " + std::to_string(result.requestId));
+    // 수정된 부분: 올바른 필드 접근
+    LogInfo("Processing fire time inference result for request " + std::to_string(result.unRequestID()));
     // 발사 시간 추론 결과 처리 로직 구현
 }
 
