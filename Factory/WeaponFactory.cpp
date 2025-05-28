@@ -1,4 +1,6 @@
 #include "WeaponFactory.h"
+#include "../Common/WeaponBase.h"
+#include "../Common/IEngagementManager.h"
 
 #include <iostream>
 
@@ -54,6 +56,7 @@ public:
         return true;
     }
     
+    // 수정된 부분: ST_3D_GEODETIC_POSITION -> ST_WEAPON_WAYPOINT
     bool UpdateWaypoints(const std::vector<ST_WEAPON_WAYPOINT>& waypoints) override
     {
         m_waypoints = waypoints;
@@ -62,12 +65,12 @@ public:
     
     void UpdateOwnShipInfo(const NAVINF_SHIP_NAVIGATION_INFO& ownShip) override
     {
-        // 자함 정보 업데이트
+        m_ownShipInfo = ownShip;
     }
     
     void UpdateTargetInfo(const TRKMGR_SYSTEMTARGET_INFO& target) override
     {
-        // 표적 정보 업데이트
+        m_targetInfo = target;
     }
     
     bool CalculateEngagementPlan() override
@@ -94,13 +97,19 @@ protected:
         // ALM 궤적 계산 로직
         m_engagementResult.isValid = true;
         m_engagementResult.totalTime_sec = 100.0f;
+        m_engagementResult.tubeNumber = m_tubeNumber;
+        m_engagementResult.weaponKind = m_weaponKind;
+        m_engagementResult.waypoints = m_waypoints;
+        
         return true;
     }
     
     ST_3D_GEODETIC_POSITION InterpolatePosition(float timeSinceLaunch) const override
     {
         // 시간에 따른 위치 보간
-        return ST_3D_GEODETIC_POSITION();
+        ST_3D_GEODETIC_POSITION position;
+        // 간단한 선형 보간 로직 구현 필요
+        return position;
     }
 };
 
@@ -114,14 +123,22 @@ public:
         return true;
     }
     
+    // 수정된 부분: ST_3D_GEODETIC_POSITION -> ST_WEAPON_WAYPOINT
     bool UpdateWaypoints(const std::vector<ST_WEAPON_WAYPOINT>& waypoints) override
     {
         m_waypoints = waypoints;
         return CalculateEngagementPlan();
     }
     
-    void UpdateOwnShipInfo(const NAVINF_SHIP_NAVIGATION_INFO& ownShip) override {}
-    void UpdateTargetInfo(const TRKMGR_SYSTEMTARGET_INFO& target) override {}
+    void UpdateOwnShipInfo(const NAVINF_SHIP_NAVIGATION_INFO& ownShip) override 
+    {
+        m_ownShipInfo = ownShip;
+    }
+    
+    void UpdateTargetInfo(const TRKMGR_SYSTEMTARGET_INFO& target) override 
+    {
+        m_targetInfo = target;
+    }
     
     bool CalculateEngagementPlan() override
     {
@@ -140,12 +157,17 @@ protected:
     {
         m_engagementResult.isValid = true;
         m_engagementResult.totalTime_sec = 80.0f;
+        m_engagementResult.tubeNumber = m_tubeNumber;
+        m_engagementResult.weaponKind = m_weaponKind;
+        m_engagementResult.waypoints = m_waypoints;
+        
         return true;
     }
     
     ST_3D_GEODETIC_POSITION InterpolatePosition(float timeSinceLaunch) const override
     {
-        return ST_3D_GEODETIC_POSITION();
+        ST_3D_GEODETIC_POSITION position;
+        return position;
     }
 };
 
@@ -156,17 +178,26 @@ public:
     
     bool SetAssignmentInfo(const TEWA_ASSIGN_CMD& assignCmd) override
     {
+        // 자항기뢰는 부설계획 정보가 포함되어야 함
         return true;
     }
     
+    // 수정된 부분: ST_3D_GEODETIC_POSITION -> ST_WEAPON_WAYPOINT
     bool UpdateWaypoints(const std::vector<ST_WEAPON_WAYPOINT>& waypoints) override
     {
         m_waypoints = waypoints;
         return CalculateEngagementPlan();
     }
     
-    void UpdateOwnShipInfo(const NAVINF_SHIP_NAVIGATION_INFO& ownShip) override {}
-    void UpdateTargetInfo(const TRKMGR_SYSTEMTARGET_INFO& target) override {}
+    void UpdateOwnShipInfo(const NAVINF_SHIP_NAVIGATION_INFO& ownShip) override 
+    {
+        m_ownShipInfo = ownShip;
+    }
+    
+    void UpdateTargetInfo(const TRKMGR_SYSTEMTARGET_INFO& target) override 
+    {
+        m_targetInfo = target;
+    }
     
     bool CalculateEngagementPlan() override
     {
@@ -188,12 +219,17 @@ protected:
     {
         m_engagementResult.isValid = true;
         m_engagementResult.totalTime_sec = 300.0f; // 더 긴 시간
+        m_engagementResult.tubeNumber = m_tubeNumber;
+        m_engagementResult.weaponKind = m_weaponKind;
+        m_engagementResult.waypoints = m_waypoints;
+        
         return true;
     }
     
     ST_3D_GEODETIC_POSITION InterpolatePosition(float timeSinceLaunch) const override
     {
-        return ST_3D_GEODETIC_POSITION();
+        ST_3D_GEODETIC_POSITION position;
+        return position;
     }
 };
 
