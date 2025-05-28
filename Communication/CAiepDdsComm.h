@@ -5,6 +5,9 @@
 #include <memory>
 #include <functional>
 
+// 전방 선언 (순환 의존성 해결)
+class WeaponController;
+
 // AIEP DDS 통신 클래스
 class AiepDdsComm : public std::enable_shared_from_this<AiepDdsComm>
 {
@@ -41,7 +44,7 @@ public:
     }
     
     // 상태 확인
-    bool IsRunning() const { return m_dds.IsRunning(); }
+    //bool IsRunning() const { return m_dds.IsRunning(); }
     
 private:
     // 수신 콜백 함수들
