@@ -1,4 +1,5 @@
 #include "WeaponController.h"
+#include "../Communication/CAiepDdsComm.h"  // 이 줄 추가
 
 #include <iostream>
 #include <iomanip>
