@@ -6,16 +6,17 @@
 #include "../Commands/ControlCommand.h"
 #include "../Communication/CAiepDdsComm.h"
 #include "../LaunchTube/LaunchTubeManager.h"
+#include "../LaunchTube/LaunchTube.h"  // 추가: LaunchTube::TubeStatus 사용을 위해
 #include "../MineDropPlan/MineDropPlanManager.h"
 #include "../dds_message/AIEP_AIEP_.hpp"
 #include "../util/AIEP_Defines.h"
-
 
 #include <memory>
 #include <thread>
 #include <atomic>
 #include <chrono>
 #include <mutex>
+#include <shared_mutex>  // 추가: shared_mutex 사용을 위해
 
 // 전방 선언 (순환 의존성 해결)
 class AiepDdsComm;
@@ -47,9 +48,9 @@ public:
     void OnDDSTopicRcvd(const AIEP_INTERNAL_INFER_RESULT_WP& inferResultWP);
     void OnDDSTopicRcvd(const AIEP_INTERNAL_INFER_RESULT_FIRE_TIME& inferResultFireTime);
     
-    // 상태 정보 조회
-    std::vector<LaunchTubeManager::TubeStatus> GetAllTubeStatus() const;
-    LaunchTubeManager::TubeStatus GetTubeStatus(uint16_t tubeNumber) const;
+    // 상태 정보 조회 - 수정된 부분: LaunchTubeManager::TubeStatus -> LaunchTube::TubeStatus
+    std::vector<LaunchTube::TubeStatus> GetAllTubeStatus() const;
+    LaunchTube::TubeStatus GetTubeStatus(uint16_t tubeNumber) const;
     std::vector<EngagementPlanResult> GetAllEngagementResults() const;
     EngagementPlanResult GetEngagementResult(uint16_t tubeNumber) const;
     
@@ -75,6 +76,13 @@ public:
         uint32_t launchedWeapons;
         std::chrono::steady_clock::time_point systemStartTime;
         std::chrono::steady_clock::time_point lastUpdateTime;
+        
+        // 기본 생성자 추가
+        SystemStatistics()
+            : totalCommands(0), successfulCommands(0), failedCommands(0)
+            , assignedTubes(0), readyTubes(0), launchedWeapons(0)
+            , systemStartTime(std::chrono::steady_clock::now())
+            , lastUpdateTime(std::chrono::steady_clock::now()) {}
     };
     
     SystemStatistics GetSystemStatistics() const;
