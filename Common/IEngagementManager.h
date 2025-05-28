@@ -5,6 +5,7 @@
 #include "../util/AIEP_Defines.h"
 #include <vector>
 #include <memory>
+#include <chrono>
 
 // 교전계획 결과 기본 구조체
 struct EngagementPlanResult
@@ -14,7 +15,7 @@ struct EngagementPlanResult
     bool isValid;
     float totalTime_sec;
     std::vector<ST_3D_GEODETIC_POSITION> trajectory;
-    std::vector < ST_WEAPON_WAYPOINT> waypoints;
+    std::vector<ST_WEAPON_WAYPOINT> waypoints;  // 수정: ST_3D_GEODETIC_POSITION -> ST_WEAPON_WAYPOINT
     ST_3D_GEODETIC_POSITION currentPosition;
     float timeToTarget_sec;
     uint32_t nextWaypointIndex;
@@ -38,7 +39,7 @@ public:
     
     // 할당 정보 설정
     virtual bool SetAssignmentInfo(const TEWA_ASSIGN_CMD& assignCmd) = 0;
-    virtual bool UpdateWaypoints(const std::vector<ST_3D_GEODETIC_POSITION>& waypoints) = 0;
+    virtual bool UpdateWaypoints(const std::vector<ST_WEAPON_WAYPOINT>& waypoints) = 0;  // 수정: ST_3D_GEODETIC_POSITION -> ST_WEAPON_WAYPOINT
     
     // 환경 정보 업데이트
     virtual void UpdateOwnShipInfo(const NAVINF_SHIP_NAVIGATION_INFO& ownShip) = 0;
@@ -99,7 +100,7 @@ protected:
     GEO_POINT_2D m_axisCenter;
     EngagementPlanResult m_engagementResult;
     
-    std::vector<ST_WEAPON_WAYPOINT> m_waypoints;
+    std::vector<ST_WEAPON_WAYPOINT> m_waypoints;  // 수정: ST_3D_GEODETIC_POSITION -> ST_WEAPON_WAYPOINT
     ST_3D_GEODETIC_POSITION m_launchPosition;
     ST_3D_GEODETIC_POSITION m_targetPosition;
     
