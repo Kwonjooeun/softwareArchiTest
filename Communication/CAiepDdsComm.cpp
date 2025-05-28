@@ -107,6 +107,7 @@ void AiepDdsComm::Start()
 void AiepDdsComm::Stop()
 {
     m_dds.Stop();
+    m_initialized = false;
     std::cout << "AiepDdsComm stopped" << std::endl;
 }
 
@@ -146,9 +147,14 @@ void AiepDdsComm::OnMineEditedPlanListReceived(const CMSHCI_AIEP_M_MINE_EDITED_P
 {
     std::cout << "Received MineEditedPlanList message" << std::endl;
     
+    // weak_ptr을 shared_ptr로 변환하여 사용
     if (auto controller = m_controller.lock())
     {
         controller->OnDDSTopicRcvd(message);
+    }
+    else
+    {
+        std::cout << "Controller is not available" << std::endl;
     }
 }
 
@@ -160,6 +166,10 @@ void AiepDdsComm::OnMineDropPlanRequestReceived(const CMSHCI_AIEP_M_MINE_DROPPIN
     {
         controller->OnDDSTopicRcvd(message);
     }
+    else
+    {
+        std::cout << "Controller is not available" << std::endl;
+    }
 }
 
 void AiepDdsComm::OnAssignCommandReceived(const TEWA_ASSIGN_CMD& message)
@@ -169,6 +179,10 @@ void AiepDdsComm::OnAssignCommandReceived(const TEWA_ASSIGN_CMD& message)
     if (auto controller = m_controller.lock())
     {
         controller->OnDDSTopicRcvd(message);
+    }
+    else
+    {
+        std::cout << "Controller is not available" << std::endl;
     }
 }
 
@@ -180,6 +194,10 @@ void AiepDdsComm::OnMineSelectedPlanReceived(const CMSHCI_AIEP_M_MINE_SELECTED_P
     {
         controller->OnDDSTopicRcvd(message);
     }
+    else
+    {
+        std::cout << "Controller is not available" << std::endl;
+    }
 }
 
 void AiepDdsComm::OnWaypointsReceived(const CMSHCI_AIEP_WPN_GEO_WAYPOINTS& message)
@@ -189,6 +207,10 @@ void AiepDdsComm::OnWaypointsReceived(const CMSHCI_AIEP_WPN_GEO_WAYPOINTS& messa
     if (auto controller = m_controller.lock())
     {
         controller->OnDDSTopicRcvd(message);
+    }
+    else
+    {
+        std::cout << "Controller is not available" << std::endl;
     }
 }
 
@@ -200,6 +222,10 @@ void AiepDdsComm::OnShipNavigationInfoReceived(const NAVINF_SHIP_NAVIGATION_INFO
     {
         controller->OnDDSTopicRcvd(message);
     }
+    else
+    {
+        std::cout << "Controller is not available" << std::endl;
+    }
 }
 
 void AiepDdsComm::OnTargetInfoReceived(const TRKMGR_SYSTEMTARGET_INFO& message)
@@ -209,6 +235,10 @@ void AiepDdsComm::OnTargetInfoReceived(const TRKMGR_SYSTEMTARGET_INFO& message)
     if (auto controller = m_controller.lock())
     {
         controller->OnDDSTopicRcvd(message);
+    }
+    else
+    {
+        std::cout << "Controller is not available" << std::endl;
     }
 }
 
@@ -220,6 +250,10 @@ void AiepDdsComm::OnAIWaypointInferRequestReceived(const CMSHCI_AIEP_AI_WAYPOINT
     {
         controller->OnDDSTopicRcvd(message);
     }
+    else
+    {
+        std::cout << "Controller is not available" << std::endl;
+    }
 }
 
 void AiepDdsComm::OnPAInfoReceived(const CMSHCI_AIEP_PA_INFO& message)
@@ -230,6 +264,10 @@ void AiepDdsComm::OnPAInfoReceived(const CMSHCI_AIEP_PA_INFO& message)
     {
         controller->OnDDSTopicRcvd(message);
     }
+    else
+    {
+        std::cout << "Controller is not available" << std::endl;
+    }
 }
 
 void AiepDdsComm::OnInternalInferResultWPReceived(const AIEP_INTERNAL_INFER_RESULT_WP& message)
@@ -239,6 +277,10 @@ void AiepDdsComm::OnInternalInferResultWPReceived(const AIEP_INTERNAL_INFER_RESU
     if (auto controller = m_controller.lock())
     {
         controller->OnDDSTopicRcvd(message);
+    }
+    else
+    {
+        std::cout << "Controller is not available" << std::endl;
     }
 }
 
@@ -251,6 +293,10 @@ void AiepDdsComm::OnWeaponControlCommandReceived(const CMSHCI_AIEP_WPN_CTRL_CMD&
         // 비동기 처리가 필요한 경우
         controller->OnDDSTopicRcvd_Async(message);
     }
+    else
+    {
+        std::cout << "Controller is not available" << std::endl;
+    }
 }
 
 void AiepDdsComm::OnInternalInferResultFireTimeReceived(const AIEP_INTERNAL_INFER_RESULT_FIRE_TIME& message)
@@ -260,5 +306,9 @@ void AiepDdsComm::OnInternalInferResultFireTimeReceived(const AIEP_INTERNAL_INFE
     if (auto controller = m_controller.lock())
     {
         controller->OnDDSTopicRcvd(message);
+    }
+    else
+    {
+        std::cout << "Controller is not available" << std::endl;
     }
 }
